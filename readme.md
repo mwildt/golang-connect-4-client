@@ -4,6 +4,7 @@ package main
 import (
 	"math/rand"
 	"sync"
+	""
 )
 
 func createBotHandler(name string) Handler {
