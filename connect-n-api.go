@@ -43,41 +43,50 @@ func (client *ProgrammableClient) onNewGame(handler TokenHandler) {}
 func (client *ProgrammableClient) onYourTurn(handler TokenHandler) {}
 
 func (client *ProgrammableClient) register(name string) {
-	client.sender<- fmt.Sprintf("REGISTER:%s", name)
+	client.sender<- fmt.Sprintf("REGISTER;%s", name)
 }
 func (client *ProgrammableClient) unregister() {
 	client.sender<- "UNREGISTER"
 }
 func (client *ProgrammableClient) joinSession(sessionId string) {
-	client.sender<- fmt.Sprintf("JOIN:%s", sessionId)
+	client.sender<- fmt.Sprintf("JOIN;%s", sessionId)
 }
 func (client *ProgrammableClient) insert(colNumber uint8, token string) {
 	client.sender<- fmt.Sprintf("INSERT;%d;%s",colNumber, token)
 }
 
-func (client *ProgrammableClient) run(){
-	for {
-		msg := <-client.receiver
-		fmt.Print("gOT MESSAGE FROM CHANNEL", msg)
-		parts := strings.Split(msg, ";")
+func (client *ProgrammableClient) run() {
+	var channelOpen = true
+	for channelOpen {
+		msg, ok := <-client.receiver
+		if ok {
+			parts := strings.Split(msg, ";")
 
-		switch parts[0] {
+			switch parts[0] {
 
-		case "NEW SEASON" : client.newSeasonHandler(parts[1])
+			case "NEW SEASON" : client.newSeasonHandler(parts[1])
 
-		case "NEW GAME" : client.newGameHandler(parts[1])
+			case "NEW GAME" : client.newGameHandler(parts[1])
 
-		case "TOKEN INSERTED" :
-			colNr, err := strconv.ParseUint(parts[2],2, 8)
-			checkError(err)
-			client.tokenInsertedHandler(parts[1], uint8(colNr))
+			case "TOKEN INSERTED" :
+				colNr, err := strconv.ParseUint(parts[2],10, 8)
+				checkError(err)
+				client.tokenInsertedHandler(parts[1], uint8(colNr))
 
-		case "YOURTURN" : client.yourTurnHandler(parts[1])
+			case "YOURTURN" : client.yourTurnHandler(parts[1])
 
-		case "RESULT" : client.resultHandler(parts[1], parts[2], parts[3])
+			case "RESULT" : client.resultHandler(parts[1], parts[2], parts[3])
 
+			}
+		} else {
+			channelOpen = false
 		}
 	}
+}
+
+func (client *ProgrammableClient) Close() {
+	close(client.sender)
+	close(client.receiver)
 }
 
 
