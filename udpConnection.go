@@ -11,12 +11,13 @@ type UdpConnection struct {
 	remoteAdr *net.UDPAddr
 	localAdr *net.UDPAddr
 	connection *net.UDPConn
+	running bool
 }
 
 func NewUdpConnection(serverAddress string, port int) *UdpConnection {
 	remoteAdr, err := net.ResolveUDPAddr("udp4", serverAddress)
 	checkError(err)
-	localAddress, err :=  net.ResolveUDPAddr("udp4", fmt.Sprintf(":%d", port))
+	localAddress, err := net.ResolveUDPAddr("udp4", fmt.Sprintf(":%d", port))
 	checkError(err)
 	connection, err := net.ListenUDP("udp", localAddress)
 	checkError(err)
@@ -24,8 +25,10 @@ func NewUdpConnection(serverAddress string, port int) *UdpConnection {
 		remoteAdr: remoteAdr,
 		localAdr: localAddress,
 		connection: connection,
+		running: true,
 	}
 }
+
 func (connection *UdpConnection) send(message string) {
 	_, err := connection.connection.WriteToUDP([]byte(message), connection.remoteAdr)
 	checkError(err)
@@ -40,20 +43,28 @@ func (connection *UdpConnection) Run(handler Handler) {
 }
 
 func (connection *UdpConnection) registerReceiver(receiver chan string) {
-	for {
+	for connection.running {
 		reply := make([]byte, 1024)
 		n, _, err := connection.connection.ReadFromUDP(reply)
-		checkError(err)
-		reply = reply[:n]
-		receiver <- string(reply)
+		if connection.running {
+			checkError(err)
+			reply = reply[:n]
+			receiver <- string(reply)
+		}
 	}
 }
 
 func (connection *UdpConnection) registerSender(sender chan string) {
-	for {
+	for connection.running {
 		msg := <-sender
 		connection.send(msg)
 	}
 }
+
+func (connection *UdpConnection) Close() {
+	connection.running = false
+	connection.connection.Close()
+}
+
 
 

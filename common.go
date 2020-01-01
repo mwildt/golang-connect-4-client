@@ -4,6 +4,6 @@ import "log"
 
 func checkError(err error){
 	if nil != err {
-		log.Fatal(err)
+		log.Fatal("FATAL ERROR ", err)
 	}
 }
