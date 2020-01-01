@@ -1,4 +1,4 @@
-package main
+package conn4api
 
 import (
 	"fmt"
