@@ -30,6 +30,7 @@ func NewUdpConnection(serverAddress string, port int) *UdpConnection {
 }
 
 func (connection *UdpConnection) send(message string) {
+	fmt.Printf("send to udp %s\n", message)
 	_, err := connection.connection.WriteToUDP([]byte(message), connection.remoteAdr)
 	checkError(err)
 }
@@ -45,7 +46,9 @@ func (connection *UdpConnection) Run(handler Handler) {
 func (connection *UdpConnection) registerReceiver(receiver chan string) {
 	for connection.running {
 		reply := make([]byte, 1024)
+		fmt.Printf("wait for udp message \n")
 		n, _, err := connection.connection.ReadFromUDP(reply)
+		fmt.Printf("got message %s \n", string(reply))
 		if connection.running {
 			checkError(err)
 			reply = reply[:n]
@@ -57,6 +60,7 @@ func (connection *UdpConnection) registerReceiver(receiver chan string) {
 func (connection *UdpConnection) registerSender(sender chan string) {
 	for connection.running {
 		msg := <-sender
+		fmt.Printf("send %s\n", msg)
 		connection.send(msg)
 	}
 }

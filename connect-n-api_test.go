@@ -9,7 +9,7 @@ func initTest() (chan string, chan string, *ProgrammableClient) {
 	sender := make(chan string, 1)
 	receiver := make(chan string, 1)
 	handler := NewProgrammableClient(sender, receiver)
-	go handler.run()
+	go handler.Run()
 	return sender, receiver, handler
 }
 
@@ -29,7 +29,7 @@ func checkMessage(channel chan string, expected string, t *testing.T) {
 func TestNEW_SEASON(t *testing.T) {
 	_, receiver, handler := initTest()
 	tokenChan := make(chan string)
-	handler.newSeasonHandler = func(token string) {
+	handler.NewSeasonHandler = func(token string) {
 		tokenChan <- token
 		defer handler.Close()
 	}
@@ -40,7 +40,7 @@ func TestNEW_SEASON(t *testing.T) {
 func TestNEW_GAME(t *testing.T) {
 	_, receiver, handler := initTest()
 	tokenChan := make(chan bool)
-	handler.newSeasonHandler = func(token string) {
+	handler.NewSeasonHandler = func(token string) {
 		tokenChan <- true
 		defer handler.Close()
 	}
@@ -55,7 +55,7 @@ func TestNEW_GAME(t *testing.T) {
 func TestYOURTURN(t *testing.T) {
 	_, receiver, handler := initTest()
 	tokenChan := make(chan string)
-	handler.yourTurnHandler = func(token string) {
+	handler.YourTurnHandler = func(token string) {
 		tokenChan <- token
 		defer handler.Close()
 	}
@@ -71,7 +71,7 @@ func TestTOKEN_INSERTED(t *testing.T) {
 	}
 
 	tokenChan := make(chan InsertTuple)
-	handler.tokenInsertedHandler = func(playerName string, col uint8) {
+	handler.TokenInsertedHandler = func(playerName string, col uint8) {
 		tokenChan <- InsertTuple{playerName, col}
 		defer handler.Close()
 	}
@@ -94,28 +94,28 @@ func TestTOKEN_INSERTED(t *testing.T) {
 
 func TestINSERT(t *testing.T) {
 	sender, _, handler := initTest()
-	handler.insert(5, "ABC-123")
+	handler.Insert(5, "ABC-123")
 	checkMessage(sender, "INSERT;5;ABC-123", t)
 	handler.Close()
 }
 
 func TestREGISTER(t *testing.T) {
 	sender, _, handler := initTest()
-	handler.register("peter")
+	handler.Register("peter")
 	checkMessage(sender, "REGISTER;peter", t)
 	handler.Close()
 }
 
 func TestUNREGISTER(t *testing.T) {
 	sender, _, handler := initTest()
-	handler.unregister()
+	handler.Unregister()
 	checkMessage(sender, "UNREGISTER", t)
 	handler.Close()
 }
 
 func TestJOIN_SESSION(t *testing.T) {
 	sender, _, handler := initTest()
-	handler.joinSession("ABC-DEF")
+	handler.JoinSession("ABC-DEF")
 	checkMessage(sender, "JOIN;ABC-DEF", t)
 	handler.Close()
 }
